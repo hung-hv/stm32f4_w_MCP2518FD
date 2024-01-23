@@ -49,7 +49,7 @@ MICROCHIP PROVIDES THIS SOFTWARE CONDITIONALLY UPON YOUR ACCEPTANCE OF THESE TER
 #include <stddef.h>
 #include <stdlib.h>
 #include "drv_canfdspi_defines.h"
-#include "stm32f4xx_hal.h"//HAL¿â
+#include "stm32f4xx_hal.h"//HALï¿½ï¿½
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
@@ -74,6 +74,9 @@ int8_t DRV_CANFDSPI_Reset(CANFDSPI_MODULE_ID index);
 //! SPI Read Byte
 
 int8_t DRV_CANFDSPI_ReadByte(CANFDSPI_MODULE_ID index, uint16_t address,
+        uint8_t *rxd);
+
+int8_t DRV_CANFDSPI_2_ReadByte(CANFDSPI_MODULE_ID index, uint16_t address,
         uint8_t *rxd);
 
 // *****************************************************************************
@@ -562,6 +565,9 @@ int8_t DRV_CANFDSPI_TransmitChannelEventAttemptClear(CANFDSPI_MODULE_ID index,
  */
 
 int8_t DRV_CANFDSPI_ReceiveChannelEventGet(CANFDSPI_MODULE_ID index,
+        CAN_FIFO_CHANNEL channel, CAN_RX_FIFO_EVENT* flags);
+
+int8_t DRV_CANFDSPI_2_ReceiveChannelEventGet(CANFDSPI_MODULE_ID index,
         CAN_FIFO_CHANNEL channel, CAN_RX_FIFO_EVENT* flags);
 
 // *****************************************************************************

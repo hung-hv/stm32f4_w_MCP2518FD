@@ -165,6 +165,29 @@ int8_t DRV_CANFDSPI_ReadByte(CANFDSPI_MODULE_ID index, uint16_t address, uint8_t
     return spiTransferError;
 }
 
+// *****************************************************************************
+// *****************************************************************************
+// Section: SPI Access Functions
+
+int8_t spiTransferError_ReadByte = 0;
+int8_t DRV_CANFDSPI_2_ReadByte(CANFDSPI_MODULE_ID index, uint16_t address, uint8_t *rxd)
+{
+    uint16_t spiTransferSize = 3;
+//    int8_t spiTransferError = 0;
+
+    // Compose command
+    spiTransmitBuffer[0] = (uint8_t) ((cINSTRUCTION_READ << 4) + ((address >> 8) & 0xF));
+    spiTransmitBuffer[1] = (uint8_t) (address & 0xFF);
+    spiTransmitBuffer[2] = 0;
+
+    spiTransferError_ReadByte = DRV_SPI_2_TransferData(index, spiTransmitBuffer, spiReceiveBuffer, spiTransferSize);
+
+    // Update data
+    *rxd = spiReceiveBuffer[2];
+
+    return spiTransferError_ReadByte;
+}
+
 int8_t DRV_CANFDSPI_WriteByte(CANFDSPI_MODULE_ID index, uint16_t address, uint8_t txd)
 {
     uint16_t spiTransferSize = 3;
@@ -472,7 +495,7 @@ int8_t DRV_CANFDSPI_ReadWordArray(CANFDSPI_MODULE_ID index, uint16_t address,
         spiTransmitBuffer[i] = 0;
     }
 
-    spiTransferError = DRV_SPI_TransferData(index, spiTransmitBuffer, spiReceiveBuffer, spiTransferSize);
+    spiTransferError = DRV_SPI_2_TransferData(index, spiTransmitBuffer, spiReceiveBuffer, spiTransferSize);
     if (spiTransferError) {
         return spiTransferError;
     }
@@ -1306,7 +1329,7 @@ int8_t DRV_CANFDSPI_ReceiveMessageGet(CANFDSPI_MODULE_ID index,
         return -4;
     }
 	
-	//¸Ä¶¯£º·µ»ØÖµ¼ÓÈëÊý¾ÝÖ¡µÄ³¤¶È
+	//ï¿½Ä¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¡ï¿½Ä³ï¿½ï¿½ï¿½
 	switch(ba[4] & 0x0f)
 	{
 		case 0x00:
@@ -2045,6 +2068,37 @@ int8_t DRV_CANFDSPI_ReceiveChannelEventGet(CANFDSPI_MODULE_ID index,
     *flags = (CAN_RX_FIFO_EVENT) (ciFifoSta.byte[0] & CAN_RX_FIFO_ALL_EVENTS);
 
     return spiTransferError;
+}
+
+// *****************************************************************************
+// *****************************************************************************
+// Section: Receive FIFO Events
+
+int8_t spiTransferError_test = 0;
+int8_t DRV_CANFDSPI_2_ReceiveChannelEventGet(CANFDSPI_MODULE_ID index,
+        CAN_FIFO_CHANNEL channel, CAN_RX_FIFO_EVENT* flags)
+{
+//    int8_t spiTransferError = 0;
+    uint16_t a = 0;
+
+#ifdef CAN_TXQUEUE_IMPLEMENTED
+    if (channel == CAN_TXQUEUE_CH0) return -100;
+#endif
+
+    // Read Interrupt flags
+    REG_CiFIFOSTA ciFifoSta;
+    ciFifoSta.word = 0;
+    a = cREGADDR_CiFIFOSTA + (channel * CiFIFO_OFFSET);
+
+    spiTransferError_test = DRV_CANFDSPI_2_ReadByte(index, a, &ciFifoSta.byte[0]);
+    if (spiTransferError_test) {
+        return -1;
+    }
+
+    // Update data
+    *flags = (CAN_RX_FIFO_EVENT) (ciFifoSta.byte[0] & CAN_RX_FIFO_ALL_EVENTS);
+
+    return spiTransferError_test;
 }
 
 int8_t DRV_CANFDSPI_ReceiveEventGet(CANFDSPI_MODULE_ID index, uint32_t* rxif)

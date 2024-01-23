@@ -7,6 +7,20 @@
 #define CAN_RTR 0x40000000U	/* RTR */
 #define CAN_ERR 0x20000000U	/* ERR/Data  message frame */
 
+// Transmit objects
+CAN_TX_FIFO_CONFIG txConfig;
+CAN_TX_FIFO_EVENT txFlags;
+CAN_TX_MSGOBJ txObj;
+uint8_t txd[MAX_DATA_BYTES];
+
+// Receive objects
+CAN_RX_FIFO_CONFIG rxConfig;
+//REG_CiFLTOBJ fObj;
+//REG_CiMASK mObj;
+CAN_RX_FIFO_EVENT rxFlags;
+CAN_RX_MSGOBJ rxObj;
+uint8_t rxd[MAX_DATA_BYTES];
+
 struct canfd_frame {
 	uint32_t can_id;	/* FMT/RTR/ERR/ID */
 	uint8_t d_len;		/* data length */
@@ -22,6 +36,7 @@ struct canfd_frame frame;
 
 void DRV_SPI_Initialize(void)
 {
+	// Reset device
     DRV_CANFDSPI_Reset(DRV_CANFDSPI_INDEX_0);
 
     CAN_OSC_CTRL oscCtrl;
@@ -66,6 +81,7 @@ void DRV_SPI_Initialize(void)
     DRV_CANFDSPI_OperationModeSelect(DRV_CANFDSPI_INDEX_0, CAN_NORMAL_MODE);
 
 }
+
 
 /**
   * @brief  SPIƬѡ�źſ���
@@ -122,6 +138,27 @@ int8_t DRV_SPI_TransferData(uint8_t spiSlaveDeviceIndex, uint8_t *SpiTxData, uin
     return error;
 } 
 
+int8_t DRV_SPI_2_TransferData(uint8_t spiSlaveDeviceIndex, uint8_t *SpiTxData, uint8_t *SpiRxData, uint16_t spiTransferSize)
+{
+    int8_t error = 0;
+    // Assert CS
+    error = DRV_SPI_ChipSelectAssert(spiSlaveDeviceIndex, true);
+    if (error != 0)
+        return error;
+
+    switch (spiSlaveDeviceIndex){
+        case DRV_CANFDSPI_INDEX_0:
+            HAL_SPI_TransmitReceive(&hspi4,SpiTxData,SpiRxData,spiTransferSize,1000);
+            break;
+        default:
+            break;
+    }
+    // De�\assert CS
+    error = DRV_SPI_ChipSelectAssert(spiSlaveDeviceIndex, false);
+
+    return error;
+}
+
 
 void mcp2518fd_transpond(void)
 {
@@ -172,7 +209,7 @@ void mcp2518fd_transpond(void)
 			printf("tec:%d, rec:%d, flags:%d\r\n", tec, rec, flags);
 			CAN_BUS_DIAGNOSTIC bd;
 			DRV_CANFDSPI_BusDiagnosticsGet(DRV_CANFDSPI_INDEX_0, &bd);
-			printf("bd:%ld\r\n", bd);
+//			printf("bd:%ld\r\n", bd);
 			DRV_CANFDSPI_ReceiveChannelEventOverflowClear(DRV_CANFDSPI_INDEX_0, CAN_FIFO_CH2);
 			return;
 		}
@@ -219,4 +256,46 @@ void mcp2518fd_transpond(void)
 		// printf("eccflags:%d\r\n", eccflags);
 		DRV_CANFDSPI_EccEventClear(DRV_CANFDSPI_INDEX_0, CAN_ECC_ALL_EVENTS);
 		DRV_CANFDSPI_ModuleEventClear(DRV_CANFDSPI_INDEX_0, CAN_ALL_EVENTS);
+}
+
+CAN_TX_MSGOBJ txObj;
+void mcp2518fd_transmit(void) {
+//	uint8_t attempts = 50;
+	uint8_t n;
+	int16_t i;
+	bool flush = true;
+	static uint16_t messageID_add = 0;
+
+    /**********************Prepare Data****************************************/
+//    Nop();
+//    Nop();
+    txObj.bF.id.SID = 0x300 + ((messageID_add++) & 0xF);
+
+    txObj.bF.ctrl.DLC = CAN_DLC_64;
+    txObj.bF.ctrl.IDE = 0; //0: standard frame | 1: extended frame
+    txObj.bF.ctrl.BRS = 1; //switch bit rate
+    txObj.bF.ctrl.FDF = 1; //1: CAN FD frame | 0: CAN frame
+
+    n = DRV_CANFDSPI_DlcToDataBytes((CAN_DLC) txObj.bF.ctrl.DLC);
+    //create random data with size of buffer = size of DLC
+    for (i = 0; i < n; i++)
+    {
+        txd[i] = rand() & 0xff;
+    }
+
+    DRV_CANFDSPI_TransmitChannelEventGet(DRV_CANFDSPI_INDEX_0, APP_TX_FIFO, &txFlags);
+    if (txFlags & CAN_TX_FIFO_NOT_FULL_EVENT) {
+    	DRV_CANFDSPI_TransmitChannelLoad(DRV_CANFDSPI_INDEX_0, APP_TX_FIFO, &txObj, txd, n, flush);
+    	printf("\r\n Transmit message's ID = %04x, and txd[0] = %02x", txObj.bF.id.SID, txd[0]);
+    }
+}
+
+void mcp2518fd_receive(void) {
+	DRV_CANFDSPI_2_ReceiveChannelEventGet(DRV_CANFDSPI_INDEX_0, APP_RX_FIFO, &rxFlags);
+	if (rxFlags & CAN_RX_FIFO_NOT_EMPTY_EVENT) {
+		// Get message
+		DRV_CANFDSPI_ReceiveMessageGet(DRV_CANFDSPI_INDEX_0, APP_RX_FIFO, &rxObj, rxd, MAX_DATA_BYTES);
+		printf("\r\n Receive message's ID = %04x, and rxd[0] = %02x", txObj.bF.id.SID, rxd[0]);
+	}
+	rxFlags = CAN_RX_FIFO_NO_EVENT;
 }

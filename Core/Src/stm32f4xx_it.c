@@ -32,6 +32,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+//#define BUFFER_SIZE 100
 
 /* USER CODE END PD */
 
@@ -44,7 +45,7 @@
 /* USER CODE BEGIN PV */
 uint32_t counter_timer = 0;
 //uint32_t counter_btn = 0;
-
+extern uint8_t RX_Buffer[BUFFER_SIZE];
 
 /* USER CODE END PV */
 
@@ -59,6 +60,8 @@ uint32_t counter_timer = 0;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern SPI_HandleTypeDef hspi1;
+extern SPI_HandleTypeDef hspi4;
 extern TIM_HandleTypeDef htim4;
 extern TIM_HandleTypeDef htim10;
 extern TIM_HandleTypeDef htim11;
@@ -279,6 +282,35 @@ void TIM4_IRQHandler(void)
 //	}
 
   /* USER CODE END TIM4_IRQn 1 */
+}
+
+/**
+  * @brief This function handles SPI1 global interrupt.
+  */
+void SPI1_IRQHandler(void)
+{
+  /* USER CODE BEGIN SPI1_IRQn 0 */
+
+  /* USER CODE END SPI1_IRQn 0 */
+  HAL_SPI_IRQHandler(&hspi1);
+  /* USER CODE BEGIN SPI1_IRQn 1 */
+
+  /* USER CODE END SPI1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles SPI4 global interrupt.
+  */
+void SPI4_IRQHandler(void)
+{
+  /* USER CODE BEGIN SPI4_IRQn 0 */
+
+  /* USER CODE END SPI4_IRQn 0 */
+  HAL_SPI_IRQHandler(&hspi4);
+  /* USER CODE BEGIN SPI4_IRQn 1 */
+//  mcp2518fd_receive();
+  HAL_SPI_Receive_IT(&hspi4, RX_Buffer, BUFFER_SIZE);
+  /* USER CODE END SPI4_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

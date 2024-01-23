@@ -1,4 +1,7 @@
-../ThirdParty/mcp2518fd/drv_spi.c:23:6:DRV_SPI_Initialize	32	static
-../ThirdParty/mcp2518fd/drv_spi.c:76:8:DRV_SPI_ChipSelectAssert	24	static
-../ThirdParty/mcp2518fd/drv_spi.c:104:8:DRV_SPI_TransferData	40	static
-../ThirdParty/mcp2518fd/drv_spi.c:126:6:mcp2518fd_transpond	72	static
+../ThirdParty/mcp2518fd/drv_spi.c:37:6:DRV_SPI_Initialize	32	static
+../ThirdParty/mcp2518fd/drv_spi.c:92:8:DRV_SPI_ChipSelectAssert	24	static
+../ThirdParty/mcp2518fd/drv_spi.c:120:8:DRV_SPI_TransferData	40	static
+../ThirdParty/mcp2518fd/drv_spi.c:141:8:DRV_SPI_2_TransferData	40	static
+../ThirdParty/mcp2518fd/drv_spi.c:163:6:mcp2518fd_transpond	72	static
+../ThirdParty/mcp2518fd/drv_spi.c:262:6:mcp2518fd_transmit	24	static
+../ThirdParty/mcp2518fd/drv_spi.c:293:6:mcp2518fd_receive	16	static
