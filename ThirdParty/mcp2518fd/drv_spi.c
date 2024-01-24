@@ -259,6 +259,7 @@ void mcp2518fd_transpond(void)
 }
 
 CAN_TX_MSGOBJ txObj;
+uint8_t flag_transmit = 0;
 void mcp2518fd_transmit(void) {
 //	uint8_t attempts = 50;
 	uint8_t n;
@@ -283,11 +284,15 @@ void mcp2518fd_transmit(void) {
         txd[i] = rand() & 0xff;
     }
 
-    DRV_CANFDSPI_TransmitChannelEventGet(DRV_CANFDSPI_INDEX_0, APP_TX_FIFO, &txFlags);
-    if (txFlags & CAN_TX_FIFO_NOT_FULL_EVENT) {
-    	DRV_CANFDSPI_TransmitChannelLoad(DRV_CANFDSPI_INDEX_0, APP_TX_FIFO, &txObj, txd, n, flush);
-    	printf("\r\n Transmit message's ID = %04x, and txd[0] = %02x", txObj.bF.id.SID, txd[0]);
-    }
+//    DRV_CANFDSPI_TransmitChannelEventGet(DRV_CANFDSPI_INDEX_0, APP_TX_FIFO, &txFlags);
+
+//    while (!(txFlags & CAN_TX_FIFO_NOT_FULL_EVENT)) {}; //WAIT
+
+//    if (txFlags & CAN_TX_FIFO_NOT_FULL_EVENT) {
+	DRV_CANFDSPI_TransmitChannelLoad(DRV_CANFDSPI_INDEX_0, APP_TX_FIFO, &txObj, txd, n, flush);
+	printf("\r\n Transmit message's ID = %04x, and txd[0] = %02x", txObj.bF.id.SID, txd[0]);
+	flag_transmit = 1;
+//    }
 }
 
 void mcp2518fd_receive(void) {

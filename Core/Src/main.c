@@ -58,6 +58,7 @@ uint8_t flag_enable_btn = 0;
 uint16_t counter_delay_btn = 0;
 
 uint8_t RX_Buffer[BUFFER_SIZE] = {0};
+uint8_t TX_Buffer[10] = {0};
 
 //struct canfd_frame frame;
 
@@ -111,7 +112,7 @@ int main(void)
   MX_SPI4_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim11);
-
+  HAL_SPI_Transmit(&hspi1, TX_Buffer, sizeof(TX_Buffer), 5000);
   HAL_SPI_Receive_IT(&hspi4, RX_Buffer, BUFFER_SIZE);
 
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_LOW);
@@ -131,9 +132,11 @@ int main(void)
 	  if (flag_send_frame == 1) {
 		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 //		  mcp2518fd_transpond();
+		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_HIGH);
 		  mcp2518fd_transmit();
 //		  mcp2518fd_receive();
-		  HAL_Delay(500);
+		  HAL_Delay(200);
+		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_LOW);
 		  flag_send_frame = 0;
 	  }
   }
